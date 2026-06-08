@@ -32,7 +32,9 @@ jobs:
             flatpak-builder \
             file
       - name: debug
-        run: |
+        buildsystem: simple
+        no-make-install: true
+        build-commands: |
           set -x
           find /bin -type f -print
       - name: Start ssh-agent and add key
