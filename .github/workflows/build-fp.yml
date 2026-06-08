@@ -70,14 +70,14 @@ jobs:
         run: |
           cd build
           ninja flatpak
-          artifact=$(ls xtrkcad-*.flatpak)
-          echo "artifact=${artifact}" >> $GITHUB_OUTPUT
+          #artifact=$(ls xtrkcad-*.flatpak)
+          #echo "artifact=${artifact}" >> $GITHUB_OUTPUT
 
       - name: Upload artifact to github
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.fp_out.outputs.artifact }}
-          path: build/${{ steps.fp_out.outputs.artifact }}
+          name: flatpak
+          path: build/xtrkcad-*.flatpak
           retention-days: 14
           overwrite: true
           archive: false
