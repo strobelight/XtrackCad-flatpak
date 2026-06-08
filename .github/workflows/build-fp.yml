@@ -27,11 +27,11 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          sudo apt-get update
+          sudo apt-get update -q
           sudo apt-get install -y \
             flatpak-builder \
             file
-          find /bin -type f
+          find /bin -type f -print >&2
       - name: Start ssh-agent and add key
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
