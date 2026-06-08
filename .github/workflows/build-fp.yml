@@ -69,6 +69,7 @@ jobs:
       - name: Build
         run: |
           cd repo
+          ls
           ninja flatpak
 
 #      - name: Upload artifacts
