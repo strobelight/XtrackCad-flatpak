@@ -31,7 +31,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -y \
+          sudo apt-get install -yq \
             flatpak-builder \
             libgtk-3-dev \
             libcmocka-dev \
@@ -73,6 +73,7 @@ jobs:
       - name: Upload artifacts
         run: |
           ls build
+          env
 #        uses: actions/upload-artifact@v4
 #        with:
 #          name: build-output
