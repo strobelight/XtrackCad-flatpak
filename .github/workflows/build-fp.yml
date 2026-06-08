@@ -33,7 +33,6 @@ jobs:
         run: |
           sudo apt-get install -y \
             flatpak-builder \
-            ninja-build \
             libgtk-3-dev \
             libcmocka-dev \
             libzip-dev \
@@ -65,11 +64,11 @@ jobs:
 
       - name: Configure build
         run: |
-          ls
           cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug repo
 
       - name: Build
         run: |
+          cd repo
           ninja flatpak
 
 #      - name: Upload artifacts
