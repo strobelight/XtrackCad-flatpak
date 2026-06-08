@@ -65,7 +65,7 @@ jobs:
         run: |
           cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug repo
 
-      - name: Build
+      - name: Build flatpak (no output for a while)
         id: fp_out
         run: |
           cd build
@@ -74,7 +74,7 @@ jobs:
           echo "artifact=${artifact}" >> $GITHUB_OUTPUT
 
       - name: Upload artifact to github
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ${{ steps.fp_out.outputs.artifact }}
           path: build/${{ steps.fp_out.outputs.artifact }}
