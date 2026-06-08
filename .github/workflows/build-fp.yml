@@ -58,7 +58,8 @@ jobs:
 
       - name: Configure build
         run: |
-          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug
+          ls
+          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug repo
 
       - name: Build
         run: |
