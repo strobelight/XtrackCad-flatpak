@@ -57,7 +57,6 @@ jobs:
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          set -x
           hg clone ssh://${{ inputs.sf_user }}@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
           cd repo
           hg update "${{ inputs.version }}"
@@ -69,10 +68,11 @@ jobs:
       - name: Build
         run: |
           cd build
-          ls
           ninja flatpak
 
-#      - name: Upload artifacts
+      - name: Upload artifacts
+        run: |
+          ls build
 #        uses: actions/upload-artifact@v4
 #        with:
 #          name: build-output
