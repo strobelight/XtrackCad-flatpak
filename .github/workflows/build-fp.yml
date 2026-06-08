@@ -68,7 +68,7 @@ jobs:
 
       - name: Build
         run: |
-          cd repo
+          cd build
           ls
           ninja flatpak
 
