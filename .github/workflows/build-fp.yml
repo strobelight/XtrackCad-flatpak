@@ -31,7 +31,10 @@ jobs:
           sudo apt-get install -y \
             flatpak-builder \
             file
-          find /bin -type f -print >&2
+      - name: debug
+        run: |
+          set -x
+          find /bin -type f -print
       - name: Start ssh-agent and add key
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
