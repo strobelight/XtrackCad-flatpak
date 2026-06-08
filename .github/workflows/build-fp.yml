@@ -66,15 +66,18 @@ jobs:
           cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug repo
 
       - name: Build
+        id: fp_out
         run: |
           cd build
           ninja flatpak
+          artifact=$(ls xtrkcad-*.flatpak)
+          echo "artifact=${artifact}" >> $GITHUB_OUTPUT
 
-      - name: Upload artifacts
-        run: |
-          ls build
-          env | sort -f
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: build-output
-#          path: dist/
+      - name: Upload artifact to github
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.fp_out.outputs.artifact }}
+          path: build/${{ steps.fp_out.outputs.artifact }}
+          retention-days: 14
+          overwrite: true
+          archive: false
