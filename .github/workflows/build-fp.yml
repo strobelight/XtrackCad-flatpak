@@ -28,15 +28,10 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update -q
+          command -v flatpak-builder
           sudo apt-get install -y \
             flatpak-builder \
             file
-      - name: debug
-        buildsystem: simple
-        no-make-install: true
-        build-commands: |
-          set -x
-          find /bin -type f -print
       - name: Start ssh-agent and add key
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
