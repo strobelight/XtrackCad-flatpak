@@ -25,9 +25,12 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install dependencies
+      - name: Update
         run: |
           sudo apt-get update -q
+
+      - name: Install dependencies
+        run: |
           command -v flatpak-builder
           sudo apt-get install -y \
             flatpak-builder \
