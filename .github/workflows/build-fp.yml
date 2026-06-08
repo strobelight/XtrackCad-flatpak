@@ -1,0 +1,63 @@
+name: Build and upload local flatpak
+
+on:
+  #schedule:
+  #  - cron: '23 3 * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Branch or Tag to build'
+        default: 'GTK3V2MAIN'
+        required: true
+        type: string
+      sf_user:
+        description: 'Sourceforge username'
+        default: 'str0belight'
+        required: true
+        type: string
+      upload_dir:
+        description: 'Relative path to upload to'
+        default: 'Development/Flatpak/TestSources'
+        required: true
+        type: string
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            flatpak-builder \
+            file
+          find /bin -type f
+      - name: Start ssh-agent and add key
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          SF_SSH_KEY: ${{ secrets.SF_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SF_SSH_KEY" > ~/.ssh/sourceforge_key
+          chmod 600 ~/.ssh/sourceforge_key
+          ssh-keyscan hg.code.sf.net >> ~/.ssh/known_hosts
+          eval "$(ssh-agent -a $SSH_AUTH_SOCK)"
+          ssh-add ~/.ssh/sourceforge_key
+
+      - name: Clone with hg
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          set -x
+          hg clone ssh://${{ inputs.sf_user }}@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
+          cd repo
+          hg update "${{ inputs.version }}"
+
+#      - name: Build
+#        run: make
+
+#      - name: Upload artifacts
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: build-output
+#          path: dist/
