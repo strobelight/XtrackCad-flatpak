@@ -33,6 +33,14 @@ jobs:
         run: |
           sudo apt-get install -y \
             flatpak-builder \
+            libgtk-3-dev \
+            libcmocka-dev \
+            zlib1g-dev \
+            libzip-dev \
+            libmxml-dev \
+            librsvg2-bin \
+            gettext \
+            xvfb \
             file
 
       - name: Start ssh-agent and add key
