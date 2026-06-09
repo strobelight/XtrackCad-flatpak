@@ -11,13 +11,13 @@ on:
         required: true
         type: string
       sf_user:
-        description: 'Sourceforge username'
+        description: 'Sourceforge username (expects SF_SSH_KEY secret to contain private key)'
         default: 'str0belight'
         required: true
         type: string
       upload_dir:
-        description: 'Relative path to upload to'
-        default: 'Development/Flatpak/TestSources'
+        description: 'Relative directory path to upload to'
+        default: 'Development/Flatpak/TestBuilds'
         required: true
         type: string
 jobs:
@@ -78,6 +78,12 @@ jobs:
         with:
           name: flatpak
           path: build/xtrkcad-*.flatpak
-          retention-days: 14
+          retention-days: 5
           overwrite: true
           archive: false
+
+      - name: Upload to sourceforge
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          scp build/xtrkcad-*.flatpak ${{ inputs.sf_user }}@frs.sourceforget.net:/home/pfs/project/xtrkcad-fork/${{ inputs.upload_dir }}/
