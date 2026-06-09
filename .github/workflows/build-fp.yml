@@ -61,6 +61,12 @@ jobs:
           cd repo
           hg update "${{ inputs.version }}"
 
+      - name: Update description
+        run: |
+          cd repo
+          CHANGESET=$(hg log -r . -T '{rev}')
+          sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from ${{ inputs.version }} (changeset $CHANGESET).\"/" app/bin/smalldlg.c
+
       - name: Configure build
         run: |
           cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug repo
