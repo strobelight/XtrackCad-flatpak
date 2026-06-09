@@ -50,6 +50,7 @@ jobs:
           printf '%s\n' "$SF_SSH_KEY" > ~/.ssh/sourceforge_key
           chmod 600 ~/.ssh/sourceforge_key
           ssh-keyscan hg.code.sf.net >> ~/.ssh/known_hosts
+          ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts
           eval "$(ssh-agent -a $SSH_AUTH_SOCK)"
           ssh-add ~/.ssh/sourceforge_key
 
