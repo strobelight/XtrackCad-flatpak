@@ -86,4 +86,4 @@ jobs:
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          scp build/xtrkcad-*.flatpak ${{ inputs.sf_user }}@frs.sourceforget.net:/home/pfs/project/xtrkcad-fork/${{ inputs.upload_dir }}/
+          scp build/xtrkcad-*.flatpak ${{ inputs.sf_user }}@frs.sourceforge.net:/home/pfs/project/xtrkcad-fork/${{ inputs.upload_dir }}/
