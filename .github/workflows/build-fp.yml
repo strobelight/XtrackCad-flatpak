@@ -7,7 +7,8 @@ on:
     inputs:
       version:
         description: 'Branch or Tag to build'
-        default: 'GTK3V2MAIN'
+        #default: 'GTK3V2MAIN'
+        default: 'KensTest'
         required: true
         type: string
       sf_user:
