@@ -20,6 +20,12 @@ on:
         default: 'Development/Flatpak/TestBuilds'
         required: true
         type: string
+      upload_flag:
+        description: 'Flag to determine whether to upload or not'
+        default: false
+        required: true
+        type: boolean
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -82,6 +88,7 @@ jobs:
 
       - name: Upload artifact to github
         uses: actions/upload-artifact@v7
+        if: ${{ inputs.upload_flag }}
         with:
           name: flatpak
           path: build/xtrkcad-*.flatpak
@@ -90,6 +97,7 @@ jobs:
           archive: false
 
       - name: Upload to sourceforge
+        if: ${{ inputs.upload_flag }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
