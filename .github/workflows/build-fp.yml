@@ -100,7 +100,7 @@ jobs:
 
       - name: Upload artifact to github
         uses: actions/upload-artifact@v7
-        if: ${{ inputs.upload_flag }} && ${{ steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ inputs.upload_flag && steps.cache.outputs.cache-hit != 'true' }}
         with:
           name: flatpak
           path: build/xtrkcad-*.flatpak
@@ -109,7 +109,7 @@ jobs:
           archive: false
 
       - name: Upload to sourceforge
-        if: ${{ inputs.upload_flag }} && ${{ steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ inputs.upload_flag && steps.cache.outputs.cache-hit != 'true' }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
