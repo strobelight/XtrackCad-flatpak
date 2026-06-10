@@ -31,7 +31,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: awalsh128/cache-apt-pkgs-action@latest
+      - name: Install dependencies
+        uses: awalsh128/cache-apt-pkgs-action@latest
         with:
           packages: flatpak-builder libgtk-3-dev libcmocka-dev libzip-dev libmxml-dev librsvg2-bin gettext
           version: 1.0
@@ -63,6 +64,7 @@ jobs:
           cd repo
           CHANGESET=$(hg log -r . -T '{rev}')
           echo "changeset=$CHANGESET" >> $GITHUB_OUTPUT
+          echo "changeset=$CHANGESET"
           sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from ${{ inputs.version }} (changeset $CHANGESET).\")/" app/bin/smalldlg.c
 
       - name: Configure build
