@@ -31,21 +31,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Update
-        run: |
-          sudo apt-get update -q
-
-      - name: Install dependencies
-        run: |
-          sudo apt-get install -yqq \
-            flatpak-builder \
-            libgtk-3-dev \
-            libcmocka-dev \
-            libzip-dev \
-            libmxml-dev \
-            librsvg2-bin \
-            gettext \
-            file
+      - uses: awalsh128/cache-apt-pkgs-action@latest
+        with:
+          packages: flatpak-builder libgtk-3-dev libcmocka-dev libzip-dev libmxml-dev librsvg2-bin gettext
+          version: 1.0
 
       - name: Start ssh-agent and add key
         env:
@@ -69,9 +58,11 @@ jobs:
           hg update "${{ inputs.version }}"
 
       - name: Update description
+        id: rev
         run: |
           cd repo
           CHANGESET=$(hg log -r . -T '{rev}')
+          echo "changeset=$CHANGESET" >> $GITHUB_OUTPUT
           sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from ${{ inputs.version }} (changeset $CHANGESET).\")/" app/bin/smalldlg.c
 
       - name: Configure build
