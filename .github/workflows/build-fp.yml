@@ -81,7 +81,7 @@ jobs:
         id: cache
         uses: actions/cache@v4
         with:
-          path: repo/.cache/build-tag
+          path: $RUNNER_TEMP/.cache/build-tag
           key: build-${{ runner.os }}-${{ inputs.version }}-${{ steps.rev.outputs.changeset }}
 
       - name: Configure build
