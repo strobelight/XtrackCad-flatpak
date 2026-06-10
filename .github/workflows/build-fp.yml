@@ -37,7 +37,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          sudo apt-get install -yqq \
+          sudo apt-get -yqq install  \
             flatpak-builder \
             libgtk-3-dev \
             libcmocka-dev \
@@ -77,12 +77,19 @@ jobs:
           echo "changeset=$CHANGESET"
           sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from ${{ inputs.version }} (changeset $CHANGESET).\")/" app/bin/smalldlg.c
 
-      - name: Tag the build
+      - name: Create cache directory
+        run: mkdir -p ~/.cache/build-tag
+
+      - name: Get cached builds
         id: cache
         uses: actions/cache@v5
         with:
           path: ~/.cache/build-tag
+          # if no cache hit, this file created on post
           key: build-${{ runner.os }}-${{ inputs.version }}-${{ steps.rev.outputs.changeset }}
+          # get keys for branch
+          restore-keys: |
+            build-${{ runner.os }}-${{ inputs.version }}-
 
       - name: Configure build
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
