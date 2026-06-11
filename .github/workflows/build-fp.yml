@@ -10,7 +10,11 @@ on:
         #default: 'GTK3V2MAIN'
         default: 'KensTest'
         required: true
-        type: string
+        type: choice
+        options:
+          - GTK3V2MAIN
+          - default
+          - KensTest
       sf_user:
         description: 'Sourceforge username (expects SF_SSH_KEY secret to contain private key)'
         default: 'str0belight'
@@ -32,6 +36,13 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Inputs
+        run: |
+          echo "::group::Inputs"
+          for b in version sf_user upload_dir upload_flag; do
+            echo "$b=${{ inputs.$b }}"
+          echo "::endgroup::"
+
       - name: Update
         run: |
           sudo apt-get update -q
