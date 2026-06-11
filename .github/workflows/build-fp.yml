@@ -41,6 +41,7 @@ jobs:
           echo "::group::Inputs"
           for b in version=${{ inputs.version }} sf_user=${{ inputs.sf_user }} upload_dir=${{ inputs.upload_dir }} upload_flag=${{ inputs.upload_flag }}; do
             echo "$b"
+          done
           echo "::endgroup::"
 
       - name: Update
