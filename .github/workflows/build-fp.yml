@@ -44,11 +44,33 @@ jobs:
           done
           echo "::endgroup::"
 
+      - name: Create cache directory
+        id: hg_id
+        env:
+          BRANCH_URL: https://sourceforge.net/p/xtrkcad-fork/xtrkcad/ci/${{ inputs.version }}/tree/
+        run: |
+          mkdir -p ~/.cache/build-tag
+          HG_ID=$(curl -sSf "$BRANCH_URL" | grep 'title="History"' | sed 's|/log.*||;s|^.*/||' | cut -c 1-12)
+          echo "changeset=$HG_ID" >> $GITHUB_OUTPUT
+
+      - name: Get cached builds
+        id: cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/build-tag
+          # if no cache hit, this file created on post
+          key: build-${{ runner.os }}-${{ inputs.version }}-${{ steps.hg_id.outputs.changeset }}
+          # get keys for branch
+          restore-keys: |
+            build-${{ runner.os }}-${{ inputs.version }}-
+
       - name: Update
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           sudo apt-get update -q
 
       - name: Install dependencies
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           sudo apt-get -yqq install  \
             flatpak-builder \
@@ -61,6 +83,7 @@ jobs:
             file
 
       - name: Start ssh-agent and add key
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
           SF_SSH_KEY: ${{ secrets.SF_SSH_KEY }}
@@ -74,6 +97,7 @@ jobs:
           ssh-add ~/.ssh/sourceforge_key
 
       - name: Get XtrackCad source and update to desired version
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
@@ -82,27 +106,23 @@ jobs:
           hg update "${{ inputs.version }}"
 
       - name: Update description
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         id: rev
         run: |
           cd repo
-          CHANGESET=$(hg log -r . -T '{rev}')
+          #CHANGESET=$(hg log -r . -T '{rev}')
+          CHANGESET=$(hg log -r . -T '{shortest(node,12)}')
           echo "changeset=$CHANGESET" >> $GITHUB_OUTPUT
           echo "changeset=$CHANGESET"
           sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from ${{ inputs.version }} (changeset $CHANGESET).\")/" app/bin/smalldlg.c
 
-      - name: Create cache directory
-        run: mkdir -p ~/.cache/build-tag
-
-      - name: Get cached builds
-        id: cache
-        uses: actions/cache@v5
-        with:
-          path: ~/.cache/build-tag
-          # if no cache hit, this file created on post
-          key: build-${{ runner.os }}-${{ inputs.version }}-${{ steps.rev.outputs.changeset }}
-          # get keys for branch
-          restore-keys: |
-            build-${{ runner.os }}-${{ inputs.version }}-
+      - name: Are we racing
+        if: ${{ steps.cache.outputs.cache-hit != 'true'  && steps.hg_id.outputs.changeset != steps.rev.outputs.changeset }}
+        run: |
+          echo "==================================================="
+          echo " Changeset checked does not match changeset cloned"
+          echo "==================================================="
+          false
 
       - name: Configure build
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
