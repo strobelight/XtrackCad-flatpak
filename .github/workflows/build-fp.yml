@@ -39,8 +39,8 @@ jobs:
       - name: Inputs
         run: |
           echo "::group::Inputs"
-          for b in version sf_user upload_dir upload_flag; do
-            eval echo "$b=${{ inputs.$b }}"
+          for b in version=${{ inputs.version }} sf_user=${{ inputs.sf_user }} upload_dir=${{ inputs.upload_dir }} upload_flag=${{ inputs.upload_flag }}; do
+            echo "$b"
           echo "::endgroup::"
 
       - name: Update
