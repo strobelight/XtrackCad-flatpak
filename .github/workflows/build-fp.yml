@@ -80,7 +80,7 @@ jobs:
             libmxml-dev \
             librsvg2-bin \
             gettext \
-            file
+            > /dev/null
 
       - name: Start ssh-agent and add key
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
