@@ -52,6 +52,7 @@ jobs:
           mkdir -p ~/.cache/build-tag
           HG_ID=$(curl -sSf "$BRANCH_URL" | grep 'title="History"' | sed 's|/log.*||;s|^.*/||' | cut -c 1-12)
           echo "changeset=$HG_ID" >> $GITHUB_OUTPUT
+          echo "changeset on remote: $HG_ID"
 
       - name: Get cached builds
         id: cache
