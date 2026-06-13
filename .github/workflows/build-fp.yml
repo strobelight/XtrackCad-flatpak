@@ -112,11 +112,11 @@ jobs:
         id: rev
         run: |
           cd repo
-          #CHANGESET=$(hg log -r . -T '{rev}')
+          CHANGESETREV=$(hg log -r . -T '{rev}')
           CHANGESET=$(hg log -r . -T '{shortest(node,12)}')
           echo "changeset=$CHANGESET" >> $GITHUB_OUTPUT
           echo "changeset=$CHANGESET"
-          sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from ${{ inputs.version }} (changeset $CHANGESET).\")/" app/bin/smalldlg.c
+          sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from ${{ inputs.version }} (changeset $CHANGESETREV:$CHANGESET).\")/" app/bin/smalldlg.c
 
       - name: Are we racing
         if: ${{ steps.cache.outputs.cache-hit != 'true'  && steps.hg_id.outputs.changeset != steps.rev.outputs.changeset }}
