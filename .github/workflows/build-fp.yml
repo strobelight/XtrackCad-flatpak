@@ -82,7 +82,8 @@ jobs:
             libmxml-dev \
             librsvg2-bin \
             gettext \
-            > /dev/null
+            intltool \
+            2>&1
 
       - name: Start ssh-agent and add key
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
@@ -115,7 +116,7 @@ jobs:
           CHANGESETREV=$(hg log -r . -T '{rev}')
           CHANGESET=$(hg log -r . -T '{shortest(node,12)}')
           echo "changeset=$CHANGESET" >> $GITHUB_OUTPUT
-          echo "changeset=$CHANGESET"
+          echo "changeset=$CHANGESETREV:$CHANGESET"
           sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from ${{ inputs.version }} (changeset $CHANGESETREV:$CHANGESET).\")/" app/bin/smalldlg.c
 
       - name: Are we racing
