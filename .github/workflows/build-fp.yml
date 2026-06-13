@@ -137,12 +137,10 @@ jobs:
         run: |
           cd build
           ninja flatpak
-          #artifact=$(ls xtrkcad-*.flatpak)
-          #echo "artifact=${artifact}" >> $GITHUB_OUTPUT
 
-      - name: Upload artifact to github
+      - name: Upload to github (always)
         uses: actions/upload-artifact@v7
-        if: ${{ steps.cache.outputs.cache-hit != 'true' && inputs.version == 'KensTest' }}
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         with:
           name: flatpak
           path: build/xtrkcad-*.flatpak
@@ -150,7 +148,7 @@ jobs:
           overwrite: true
           archive: false
 
-      - name: Upload to sourceforge
+      - name: Upload to sourceforge (conditionally)
         if: ${{ inputs.upload_flag && steps.cache.outputs.cache-hit != 'true' }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
