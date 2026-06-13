@@ -141,7 +141,7 @@ jobs:
 
       - name: Upload artifact to github
         uses: actions/upload-artifact@v7
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ steps.cache.outputs.cache-hit != 'true' && inputs.version == 'KensTest' }}
         with:
           name: flatpak
           path: build/xtrkcad-*.flatpak
