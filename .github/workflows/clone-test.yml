@@ -1,7 +1,7 @@
 name: Clone test
 
 on:
-  schedule:
+  #schedule:
             # ┌───────────── minute (0-59)
             # │ ┌───────────── hour (0-23)
             # │ │ ┌───────────── day of month (1-31)
@@ -9,24 +9,24 @@ on:
             # │ │ │ │ ┌───────────── day of week (0-6, Sunday=0)
             # │ │ │ │ │
             # * * * * *
-    - cron: '17/30 * * * 1'
-#  workflow_dispatch:
-#    inputs:
-#      version:
-#        description: 'Branch or Tag to build'
-#        #default: 'GTK3V2MAIN'
-#        default: 'KensTest'
-#        required: true
-#        type: choice
-#        options:
-#          - GTK3V2MAIN
-#          - default
-#          - KensTest
-#      sf_user:
-#        description: 'Sourceforge username (expects SF_SSH_KEY secret to contain private key)'
-#        default: 'str0belight'
-#        required: true
-#        type: string
+  #  - cron: '17/30 * * * 1'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Branch or Tag to build'
+        #default: 'GTK3V2MAIN'
+        default: 'KensTest'
+        required: true
+        type: choice
+        options:
+          - GTK3V2MAIN
+          - default
+          - KensTest
+      sf_user:
+        description: 'Sourceforge username (expects SF_SSH_KEY secret to contain private key)'
+        default: 'str0belight'
+        required: true
+        type: string
 
 jobs:
   build:
