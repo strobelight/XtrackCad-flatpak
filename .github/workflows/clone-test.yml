@@ -28,8 +28,12 @@ jobs:
     steps:
       - name: Inputs
         run: |
+          SF_VERSION="${{ github.event.inputs.version || 'KensTest' }}"
+          SF_USER="${{ github.event.inputs.sf_user || 'str0belight' }}"
+          echo "SF_VERSION=$SF_VERSION" >> $GITHUB_ENV
+          echo "SF_USER=$SF_USER" >> $GITHUB_ENV
           echo "::group::Inputs"
-          for b in version=${{ inputs.version || 'KensTest' }} sf_user=${{ inputs.sf_user || 'str0belight' }}; do
+          for b in "version=$SF_VERSION" "sf_user=$SF_USER"; do
             echo "$b"
           done
           echo "::endgroup::"
@@ -51,6 +55,6 @@ jobs:
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          hg clone ssh://${{ inputs.sf_user || 'str0belight' }}@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
+          hg clone ssh://$SF_USER@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
           cd repo
-          hg update "${{ inputs.version || 'KensTest' }}"
+          hg update "$SF_VERSION"
