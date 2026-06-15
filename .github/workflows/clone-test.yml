@@ -2,7 +2,7 @@ name: Clone test
 
 on:
   schedule:
-    - cron: '4 * * * *'
+    - cron: '*/5 * * * *'
   workflow_dispatch:
     inputs:
       version:
