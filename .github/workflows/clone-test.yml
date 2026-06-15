@@ -20,16 +20,6 @@ on:
         default: 'str0belight'
         required: true
         type: string
-      upload_dir:
-        description: 'Relative directory path to upload to'
-        default: 'Development/Flatpak/TestBuilds'
-        required: true
-        type: string
-      upload_flag:
-        description: 'Check to upload'
-        default: false
-        required: true
-        type: boolean
 
 jobs:
   build:
@@ -39,7 +29,7 @@ jobs:
       - name: Inputs
         run: |
           echo "::group::Inputs"
-          for b in version=${{ inputs.version }} sf_user=${{ inputs.sf_user }} upload_dir=${{ inputs.upload_dir }} upload_flag=${{ inputs.upload_flag }}; do
+          for b in version=${{ inputs.version || 'KensTest' }} sf_user=${{ inputs.sf_user || 'str0belight' }}; do
             echo "$b"
           done
           echo "::endgroup::"
@@ -61,6 +51,6 @@ jobs:
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          hg clone ssh://${{ inputs.sf_user }}@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
+          hg clone ssh://${{ inputs.sf_user || 'str0belight' }}@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
           cd repo
-          hg update "${{ inputs.version }}"
+          hg update "${{ inputs.version || 'KensTest' }}"
