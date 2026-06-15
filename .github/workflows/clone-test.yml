@@ -1,0 +1,66 @@
+name: Clone test
+
+on:
+  #schedule:
+  #  - cron: '23 3 * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Branch or Tag to build'
+        #default: 'GTK3V2MAIN'
+        default: 'KensTest'
+        required: true
+        type: choice
+        options:
+          - GTK3V2MAIN
+          - default
+          - KensTest
+      sf_user:
+        description: 'Sourceforge username (expects SF_SSH_KEY secret to contain private key)'
+        default: 'str0belight'
+        required: true
+        type: string
+      upload_dir:
+        description: 'Relative directory path to upload to'
+        default: 'Development/Flatpak/TestBuilds'
+        required: true
+        type: string
+      upload_flag:
+        description: 'Check to upload'
+        default: false
+        required: true
+        type: boolean
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Inputs
+        run: |
+          echo "::group::Inputs"
+          for b in version=${{ inputs.version }} sf_user=${{ inputs.sf_user }} upload_dir=${{ inputs.upload_dir }} upload_flag=${{ inputs.upload_flag }}; do
+            echo "$b"
+          done
+          echo "::endgroup::"
+
+      - name: Start ssh-agent and add key
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          SF_SSH_KEY: ${{ secrets.SF_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SF_SSH_KEY" > ~/.ssh/sourceforge_key
+          chmod 600 ~/.ssh/sourceforge_key
+          ssh-keyscan hg.code.sf.net >> ~/.ssh/known_hosts
+          ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts
+          eval "$(ssh-agent -a $SSH_AUTH_SOCK)"
+          ssh-add ~/.ssh/sourceforge_key
+
+      - name: Get XtrackCad source and update to desired version
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          hg clone ssh://${{ inputs.sf_user }}@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
+          cd repo
+          hg update "${{ inputs.version }}"
