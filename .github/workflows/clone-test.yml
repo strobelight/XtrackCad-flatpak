@@ -9,7 +9,7 @@ on:
             # │ │ │ │ ┌───────────── day of week (0-6, Sunday=0)
             # │ │ │ │ │
             # * * * * *
-    - cron: '*/15 * * * 1'
+    - cron: '7/15 * * * 1'
   workflow_dispatch:
     inputs:
       version:
