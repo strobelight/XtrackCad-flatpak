@@ -132,6 +132,8 @@ jobs:
         run: |
           echo "==================================================="
           echo " Changeset checked does not match changeset cloned"
+          echo "   from web: ${{ steps.hg_id.outputs.changeset }}"
+          echo "   after clone: ${{ steps.rev.outputs.changeset }}"
           echo "==================================================="
           false
 
