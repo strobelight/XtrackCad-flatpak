@@ -32,6 +32,12 @@ on:
         required: true
         type: boolean
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # builds take longer than the check so let build complete
+  # the queued flow when allowed to run will see the cached build and exit
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: ubuntu-latest
