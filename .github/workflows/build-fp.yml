@@ -1,4 +1,4 @@
-name: Build and upload local flatpak
+name: Build ${{ inputs.version }} test flatpak
 
 on:
   # github scheduling lags severely
