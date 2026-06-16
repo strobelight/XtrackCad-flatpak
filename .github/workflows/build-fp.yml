@@ -1,8 +1,9 @@
 name: Build and upload local flatpak
 
 on:
+  # github scheduling lags severely
   #schedule:
-  #  - cron: '23 3 * * *'
+  #  - cron: '23 * * * *'
   workflow_dispatch:
     inputs:
       version:
@@ -38,8 +39,16 @@ jobs:
     steps:
       - name: Inputs
         run: |
+          SF_VERSION="${{ inputs.version }}"
+          SF_USER="${{ inputs.sf_user }}"
+          SF_UPLOAD_DIR="${{ inputs.upload_dir }}"
+          SF_UPLOAD_FLAG="${{ inputs.upload_flag }}"
+          echo "SF_VERSION=$SF_VERSION" >> $GITHUB_ENV
+          echo "SF_USER=$SF_USER" >> $GITHUB_ENV
+          echo "SF_UPLOAD_DIR=$SF_UPLOAD_DIR" >> $GITHUB_ENV
+          echo "SF_UPLOAD_FLAG=$SF_UPLOAD_FLAG" >> $GITHUB_ENV
           echo "::group::Inputs"
-          for b in version=${{ inputs.version }} sf_user=${{ inputs.sf_user }} upload_dir=${{ inputs.upload_dir }} upload_flag=${{ inputs.upload_flag }}; do
+          for b in version=$SF_VERSION sf_user=$SF_USER upload_dir=$SF_UPLOAD_DIR upload_flag=$SF_UPLOAD_FLAG; do
             echo "$b"
           done
           echo "::endgroup::"
@@ -47,7 +56,7 @@ jobs:
       - name: Create cache directory
         id: hg_id
         env:
-          BRANCH_URL: https://sourceforge.net/p/xtrkcad-fork/xtrkcad/ci/${{ inputs.version }}/tree/
+          BRANCH_URL: https://sourceforge.net/p/xtrkcad-fork/xtrkcad/ci/${{ env.SF_VERSION }}/tree/
         run: |
           mkdir -p ~/.cache/build-tag
           HG_ID=$(curl -sSf "$BRANCH_URL" | grep 'title="History"' | sed 's|/log.*||;s|^.*/||' | cut -c 1-12)
@@ -60,10 +69,10 @@ jobs:
         with:
           path: ~/.cache/build-tag
           # if no cache hit, this file created on post
-          key: build-${{ runner.os }}-${{ inputs.version }}-${{ steps.hg_id.outputs.changeset }}
+          key: build-${{ runner.os }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
           # get keys for branch
           restore-keys: |
-            build-${{ runner.os }}-${{ inputs.version }}-
+            build-${{ runner.os }}-${{ env.SF_VERSION }}-
 
       - name: Update
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
@@ -103,9 +112,9 @@ jobs:
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          hg clone ssh://${{ inputs.sf_user }}@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
+          hg clone ssh://$SF_USER@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
           cd repo
-          hg update "${{ inputs.version }}"
+          hg update "$SF_VERSION"
 
       - name: Update description
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
@@ -116,7 +125,7 @@ jobs:
           CHANGESET=$(hg log -r . -T '{shortest(node,12)}')
           echo "changeset=$CHANGESET" >> $GITHUB_OUTPUT
           echo "changeset=$CHANGESETREV:$CHANGESET"
-          sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from ${{ inputs.version }} (changeset $CHANGESETREV:$CHANGESET).\")/" app/bin/smalldlg.c
+          sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from $SF_VERSION (changeset $CHANGESETREV:$CHANGESET).\")/" app/bin/smalldlg.c
 
       - name: Are we racing
         if: ${{ steps.cache.outputs.cache-hit != 'true'  && steps.hg_id.outputs.changeset != steps.rev.outputs.changeset }}
@@ -149,8 +158,8 @@ jobs:
           archive: false
 
       - name: Upload to sourceforge (conditionally)
-        if: ${{ inputs.upload_flag && steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ env.SF_UPLOAD_FLAG }} && steps.cache.outputs.cache-hit != 'true' }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          scp build/xtrkcad-*.flatpak ${{ inputs.sf_user }}@frs.sourceforge.net:/home/pfs/project/xtrkcad-fork/${{ inputs.upload_dir }}/
+          scp build/xtrkcad-*.flatpak $SF_USER@frs.sourceforge.net:/home/pfs/project/xtrkcad-fork/$SF_UPLOAD_DIR/
