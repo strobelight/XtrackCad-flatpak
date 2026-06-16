@@ -1,4 +1,4 @@
-name: Build ${{ github.event.inputs.version || 'a' }} test flatpak
+name: Build a test flatpak
 
 on:
   # github scheduling lags severely
