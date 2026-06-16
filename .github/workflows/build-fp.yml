@@ -166,7 +166,7 @@ jobs:
           archive: false
 
       - name: Upload to sourceforge (conditionally)
-        if: ${{ env.SF_UPLOAD_FLAG && steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ env.SF_UPLOAD_FLAG == 'true' && steps.cache.outputs.cache-hit != 'true' }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
