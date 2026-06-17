@@ -1,4 +1,4 @@
-name: "Clone ${{ github.event.inputs.version != '' && github.event.inputs.version != null ? github.event.inputs.version : 'a' }} test"
+name: "Clone ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version ? github.event.inputs.version : 'a' }} test"
 
 on:
   #schedule:
