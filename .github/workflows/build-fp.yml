@@ -1,4 +1,5 @@
 name: Build a test flatpak
+run-name: Build ${{ inputs.version }} test flatpak
 
 on:
   # github scheduling lags severely
