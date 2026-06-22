@@ -72,14 +72,15 @@ jobs:
 
       - name: Get cached builds
         id: cache
-        uses: actions/cache@v5
+        uses: actions/cache/restore@v5
         with:
           path: ~/.cache/build-tag
           # if no cache hit, this file created on post
           key: build-${{ runner.os }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
           # get keys for branch
-          restore-keys: |
-            build-${{ runner.os }}-${{ env.SF_VERSION }}-
+          #restore-keys: |
+          #  build-${{ runner.os }}-${{ env.SF_VERSION }}-
+          lookup-only: true
 
       - name: Update
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
@@ -172,3 +173,10 @@ jobs:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
           scp build/xtrkcad-*.flatpak $SF_USER@frs.sourceforge.net:/home/pfs/project/xtrkcad-fork/$SF_UPLOAD_DIR/
+
+      - name: Save cache key
+        uses: actions/cache/save@v5
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        with:
+          path: ~/.cache/build-tag
+          key: ${{ steps.cache.outputs.cache-primary-key }}
