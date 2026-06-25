@@ -45,6 +45,7 @@ export GH_TOKEN="github_pat_*REDACTED*"
 ## start via systemd
 
 ```
+sudo loginctl enable-linger $UID
 systemctl --user daemon-reload
 systemctl --user enable gh.timer
 ```
@@ -54,4 +55,5 @@ systemctl --user enable gh.timer
 ```
 journalctl --user -u gh.timer -n 10
 journalctl --user -u gh.service -n 10
+loginctl user-status $UID
 ```
