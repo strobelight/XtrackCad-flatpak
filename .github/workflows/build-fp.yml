@@ -89,6 +89,8 @@ jobs:
 
       - name: Install dependencies
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        env:
+          DEBIAN_FRONTEND: noninteractive
         run: |
           sudo apt-get -yqq install  \
             flatpak-builder \
@@ -99,6 +101,7 @@ jobs:
             libmxml-dev \
             librsvg2-bin \
             gettext \
+            mercurial \
             >/dev/null
 
       - name: Start ssh-agent and add key
