@@ -75,7 +75,7 @@ jobs:
           secure: true
           username: ${{ secrets.GOOGLE_SMTP_USER }}
           password: ${{ secrets.GOOGLE_SMTP_PASS }}
-          subject: Github workflow built $SF_VERSION
+          subject: Github workflow built ${{ env.SF_VERSION }}
           to: ${{ secrets.GOOGLE_SMTP_USER }}
           from: ${{ secrets.GOOGLE_SMTP_USER }}
           body: |
