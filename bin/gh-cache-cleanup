@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+
+DRY_RUN=false
+
+OWNER=strobelight
+REPO=XtrackCad-flatpak
+THRESHOLD_DAYS=2
+
+CUTOFF=$(date -u -d "$THRESHOLD_DAYS days ago" +"%Y-%m-%dT%H:%M:%SZ")
+
+PATTERNS=(
+  '^build-Linux-KensTest-'
+  '^build-Linux-default-'
+  '^build-Linux-GTK3V2MAIN-'
+)
+
+#gh api -X GET "repos/$OWNER/$REPO/actions/caches" --paginate
+
+ALL_JSON=$(gh api -X GET "repos/$OWNER/$REPO/actions/caches" --paginate)
+
+# get keeper id (most recent) for each pattern
+KEEPERS=()
+for pat in "${PATTERNS[@]}"; do
+  id=$(echo "$ALL_JSON" | jq -r --arg pat "$pat" '
+    .actions_caches
+    | map(. + {last: (.last_accessed_at // "1970-01-01T00:00:00Z")})
+    | sort_by(.last) | reverse
+    | map(select(.key | test($pat; "i")))
+    | .[0].id // empty
+  ')
+  [ -n "$id" ] && KEEPERS+=("$id")
+done
+
+# print candidates: caches that match any pattern but are not in KEEPERS
+echo "$ALL_JSON" | jq -r --argjson keepers "$(printf '%s\n' "${KEEPERS[@]}" | jq -R -s -c 'split("\n")[:-1]')" --argjson pats "$(printf '%s\n' "${PATTERNS[@]}" | jq -R -s -c 'split("\n")[:-1]')" '
+  .actions_caches
+  | map(. + {last: (.last_accessed_at // "1970-01-01T00:00:00Z")})
+  | sort_by(.last) | reverse
+  | .[]
+  | ( $pats[] ) as $pat
+  | select(.key | test($pat; "i"))
+  | select( (.id | tostring) as $id | ($keepers | index($id) | not) )
+  | "\(.id)\t\(.key)\t\(.last)\t\($pat)"' |
+while IFS=$'\t' read -r id key last pat; do
+  if [[ $DRY_RUN == "true" ]]; then
+    echo "Would delete id:$id key:$key last_accessed_at:$last" #"matched_pattern:$pat"
+  else
+    gh api -X DELETE "repos/$OWNER/$REPO/actions/caches/$id"
+  fi
+done
+
