@@ -66,3 +66,21 @@ jobs:
           hg clone ssh://$SF_USER@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
           cd repo
           hg update "$SF_VERSION"
+
+      - name: Email test
+        uses: dawidd6/action-send-mail@v18
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          secure: true
+          username: ${{ secrets.GOOGLE_SMTP_USER }}
+          password: ${{ secrets.GOOGLE_SMTP_PASS }}
+          subject: Github workflow built $SF_VERSION
+          to: ${{ secrets.GOOGLE_SMTP_USER }}
+          from: ${{ secrets.GOOGLE_SMTP_USER }}
+          body: |
+            Workflow: ${{ github.workflow }}
+            Run ID: ${{ github.run_id }}
+            Run attempt: ${{ github.run_attempt }}
+            URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
