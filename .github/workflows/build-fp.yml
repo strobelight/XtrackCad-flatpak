@@ -58,7 +58,7 @@ jobs:
           done
           echo "::endgroup::"
 
-      - name: Create cache directory
+      - name: Get latest changeset and create cache directory
         id: hg_id
         env:
           BRANCH_URL: https://sourceforge.net/p/xtrkcad-fork/xtrkcad/ci/${{ env.SF_VERSION }}/tree/
@@ -68,7 +68,7 @@ jobs:
           echo "changeset=$HG_ID" >> $GITHUB_OUTPUT
           echo "changeset on remote: $HG_ID"
 
-      - name: Get cached builds
+      - name: If built already skip next steps
         id: cache
         uses: actions/cache/restore@v5
         with:
@@ -188,12 +188,13 @@ jobs:
           secure: true
           username: ${{ secrets.GOOGLE_SMTP_USER }}
           password: ${{ secrets.GOOGLE_SMTP_PASS }}
-          subject: Github workflow built ${{ env.SF_VERSION }}
+          subject: Github workflow built ${{ env.SF_VERSION }} flatpak
           to: ${{ secrets.GOOGLE_SMTP_USER }}
           from: ${{ secrets.GOOGLE_SMTP_USER }}
           body: |
-            Workflow: ${{ github.workflow }}
-            Run ID: ${{ github.run_id }}
+            Workflow:    ${{ github.workflow }}
+            Run ID:      ${{ github.run_id }}
             Run attempt: ${{ github.run_attempt }}
-            URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            URL:         ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Changeset:   ${{ steps.rev.outputs.changeset }}
 
