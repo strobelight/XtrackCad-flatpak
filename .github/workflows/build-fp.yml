@@ -146,7 +146,7 @@ jobs:
       - name: Configure build
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
-          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 repo
+          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 -DXTRKCAD_FLATPAK_NOVERSION=1 repo
 
       - name: Build flatpak (no output for a while)
         id: fp_out
