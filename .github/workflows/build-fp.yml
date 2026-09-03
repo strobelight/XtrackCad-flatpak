@@ -155,9 +155,9 @@ jobs:
         run: |
           cd build
           ninja flatpak
-          VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_FILE_VERSION" | sed 's/"[ ]*$//;s/^.*"//')
-          ARCH=$(uname -m)
-          mv xtrkcad-*flatpak xtrkcad-${VERSION}.${ARCH}.flatpak
+          #VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_FILE_VERSION" | sed 's/"[ ]*$//;s/^.*"//')
+          #ARCH=$(uname -m)
+          #mv xtrkcad-*flatpak xtrkcad-${VERSION}.${ARCH}.flatpak
 
       - name: Upload to github (always)
         uses: actions/upload-artifact@v7
