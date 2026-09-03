@@ -156,13 +156,12 @@ jobs:
           cd build
           ninja flatpak
           echo "============================================================================="
-          VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_VERSION " | sed 's/"[ ]*$//;s/^.*"//')
-          echo "VERSION=$VERSION"
-          cat xtrkcad-config.h
+          HASH=steps.rev.outputs.changeset
+          VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_VERSION " | sed 's/"[ ]*$//;s/^.*"//' | sed "s/.${HASH}//")
           ARCH=$(uname -m)
-          echo "ARCH=$ARCH"
+          echo "VERSION=$VERSION HASH=$HASH ARCH=$ARCH"
           FP_NAME=$(ls -1 xtrkcad*flatpak|head -1)
-          mv $FP_NAME xtrkcad-${VERSION}.${ARCH}.flatpak
+          mv $FP_NAME xtrkcad-${VERSION}.${HASH}.${ARCH}.flatpak
           ls *flatpak
           echo "============================================================================="
 
