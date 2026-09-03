@@ -156,7 +156,7 @@ jobs:
           cd build
           ninja flatpak
           echo "============================================================================="
-          HASH=steps.rev.outputs.changeset
+          HASH=${{ steps.rev.outputs.changeset }}
           VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_VERSION " | sed 's/"[ ]*$//;s/^.*"//' | sed "s/.${HASH}//")
           ARCH=$(uname -m)
           echo "VERSION=$VERSION HASH=$HASH ARCH=$ARCH"
