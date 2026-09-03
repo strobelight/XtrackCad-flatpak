@@ -155,10 +155,11 @@ jobs:
         run: |
           cd build
           ninja flatpak
-          VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_FILE_VERSION" | sed 's/"[ ]*$//;s/^.*"//')
+          VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_VERSION " | sed 's/"[ ]*$//;s/^.*"//')
           echo "VERSION=$VERSION"
           cat xtrkcad-config.h
-          #ARCH=$(uname -m)
+          ARCH=$(uname -m)
+          echo "ARCH=$ARCH"
           #mv xtrkcad-*flatpak xtrkcad-${VERSION}.${ARCH}.flatpak
 
       - name: Upload to github (always)
