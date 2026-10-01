@@ -65,6 +65,9 @@ jobs:
         run: |
           mkdir -p ~/.cache/build-tag
           HG_ID=$(curl -sSf "$BRANCH_URL" | grep 'title="History"' | sed 's|/log.*||;s|^.*/||' | cut -c 1-12)
+          if [[ -z "$HG_ID" ]]; then
+            HG_ID=WebsiteDown
+          fi
           echo "changeset=$HG_ID" >> $GITHUB_OUTPUT
           echo "changeset on remote: $HG_ID"
 
@@ -76,6 +79,13 @@ jobs:
           # if no cache hit, this key created at the end
           key: build-${{ runner.os }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
           lookup-only: true
+
+      - name: Cache website down
+        uses: actions/cache/save@v5
+        if: ${{ steps.hg_id.outputs.changeset == 'WebsiteDown' }}
+        with:
+          path: ~/.cache/build-tag
+          key: ${{ steps.cache.outputs.cache-primary-key }}
 
       - name: Update
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
