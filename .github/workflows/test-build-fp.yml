@@ -1,4 +1,4 @@
-name: Build a test flatpak
+name: Test build a test flatpak
 run-name: Build ${{ inputs.version }} test flatpak
 
 on:
