@@ -61,7 +61,7 @@ jobs:
       - name: Get latest changeset and create cache directory
         id: hg_id
         env:
-          BRANCH_URL: https://sourceforge.net/p/xtrkcad-fork/xtrkcad/ci/${{ env.SF_VERSION }}/tree/DELETE_ME
+          BRANCH_URL: https://sourceforge.net/p/xtrkcad-fork/xtrkcad/ci/${{ env.SF_VERSION }}/tree/
         run: |
           mkdir -p ~/.cache/build-tag
           HG_ID=$(curl -sSf "$BRANCH_URL" | grep 'title="History"' | sed 's|/log.*||;s|^.*/||' | cut -c 1-12)
