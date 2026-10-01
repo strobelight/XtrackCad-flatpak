@@ -1,0 +1,220 @@
+name: Build a test flatpak
+run-name: Build ${{ inputs.version }} test flatpak
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Branch or Tag to build'
+        default: 'GTK3V2MAIN'
+        #default: 'KensTest'
+        required: true
+        type: choice
+        # dropdown avoids mis-spelling the branch
+        options:
+          - GTK3V2MAIN
+          - default
+          - KensTest
+      sf_user:
+        description: 'Sourceforge username (expects SF_SSH_KEY secret to contain private key)'
+        default: 'str0belight'
+        required: true
+        type: string
+      upload_dir:
+        description: 'Relative directory path to upload to'
+        default: 'Development/Flatpak/TestBuilds'
+        required: true
+        type: string
+      upload_flag:
+        description: 'Check to upload'
+        default: false
+        required: true
+        type: boolean
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # builds take longer than the check so let build complete
+  # the queued flow when allowed to run will see the cached build and exit
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+
+    steps:
+      - name: Inputs
+        run: |
+          SF_VERSION="${{ inputs.version }}"
+          SF_USER="${{ inputs.sf_user }}"
+          SF_UPLOAD_DIR="${{ inputs.upload_dir }}"
+          SF_UPLOAD_FLAG="${{ inputs.upload_flag }}"
+          echo "SF_VERSION=$SF_VERSION" >> $GITHUB_ENV
+          echo "SF_USER=$SF_USER" >> $GITHUB_ENV
+          echo "SF_UPLOAD_DIR=$SF_UPLOAD_DIR" >> $GITHUB_ENV
+          echo "SF_UPLOAD_FLAG=$SF_UPLOAD_FLAG" >> $GITHUB_ENV
+          echo "::group::Inputs"
+          for b in version=$SF_VERSION sf_user=$SF_USER upload_dir=$SF_UPLOAD_DIR upload_flag=$SF_UPLOAD_FLAG; do
+            echo "$b"
+          done
+          echo "::endgroup::"
+
+      - name: Get latest changeset and create cache directory
+        id: hg_id
+        env:
+          BRANCH_URL: https://sourceforge.net/p/xtrkcad-fork/xtrkcad/ci/${{ env.SF_VERSION }}/tree/DELETE_ME
+        run: |
+          mkdir -p ~/.cache/build-tag
+          HG_ID=$(curl -sSf "$BRANCH_URL" | grep 'title="History"' | sed 's|/log.*||;s|^.*/||' | cut -c 1-12)
+          if [[ -z "$HG_ID" ]]; then
+            HG_ID=WebsiteDown
+          fi
+          echo "changeset=$HG_ID" >> $GITHUB_OUTPUT
+          echo "changeset on remote: $HG_ID"
+
+      - name: If built already skip next steps
+        id: cache
+        uses: actions/cache/restore@v5
+        with:
+          path: ~/.cache/build-tag
+          # if no cache hit, this key created at the end
+          key: build-${{ runner.os }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
+          lookup-only: true
+
+      - name: Cache website down
+        uses: actions/cache/save@v5
+        if: ${{ steps.hg_id.outputs.changeset == 'WebsiteDown' }}
+        with:
+          path: ~/.cache/build-tag
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      - name: Update
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        run: |
+          sudo apt-get update -q
+
+      - name: Install dependencies
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          sudo apt-get -yqq install  \
+            flatpak-builder \
+            libgtk-3-dev \
+            libgtk2.0-dev \
+            libcmocka-dev \
+            libzip-dev \
+            libmxml-dev \
+            librsvg2-bin \
+            gettext \
+            mercurial \
+            >/dev/null
+
+      - name: Start ssh-agent and add key
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          SF_SSH_KEY: ${{ secrets.SF_SSH_KEY }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SF_SSH_KEY" > ~/.ssh/sourceforge_key
+          chmod 600 ~/.ssh/sourceforge_key
+          ssh-keyscan hg.code.sf.net >> ~/.ssh/known_hosts
+          ssh-keyscan frs.sourceforge.net >> ~/.ssh/known_hosts
+          eval "$(ssh-agent -a $SSH_AUTH_SOCK)"
+          ssh-add ~/.ssh/sourceforge_key
+
+      - name: Get XtrackCad source and update to desired version
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          hg clone ssh://$SF_USER@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
+          cd repo
+          hg update "$SF_VERSION"
+
+      - name: Update description in Help->About
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        id: rev
+        run: |
+          cd repo
+          CHANGESETREV=$(hg log -r . -T '{rev}')
+          CHANGESET=$(hg log -r . -T '{shortest(node,12)}')
+          echo "changeset=$CHANGESET" >> $GITHUB_OUTPUT
+          echo "changeset=$CHANGESETREV:$CHANGESET"
+          sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from $SF_VERSION (changeset $CHANGESETREV:$CHANGESET).\")/" app/bin/smalldlg.c
+
+      - name: Are we racing
+        if: ${{ steps.cache.outputs.cache-hit != 'true'  && steps.hg_id.outputs.changeset != steps.rev.outputs.changeset }}
+        run: |
+          echo "==================================================="
+          echo " Changeset checked does not match changeset cloned"
+          echo "   from web: ${{ steps.hg_id.outputs.changeset }}"
+          echo "   after clone: ${{ steps.rev.outputs.changeset }}"
+          echo "==================================================="
+          false
+
+      - name: Configure build
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        run: |
+          XTRKCAD_CMAKE_EXTRA_FLAGS="-DXTRKCAD_FLATPAK_NOVERSION=1 -DXTRKCAD_APPEND_SRC_HASH=OFF"
+          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 $XTRKCAD_CMAKE_EXTRA_FLAGS repo
+
+      - name: Build flatpak (no output for a while)
+        id: fp_out
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        run: |
+          cd build
+          ninja flatpak
+          echo "============================================================================="
+          HASH=${{ steps.rev.outputs.changeset }}
+          VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_VERSION " | sed 's/"[ ]*$//;s/^.*"//' | sed "s/.${HASH}//")
+          ARCH=$(uname -m)
+          echo "VERSION=$VERSION HASH=$HASH ARCH=$ARCH"
+          FP_NAME=$(ls -1 xtrkcad*flatpak|head -1)
+          mv $FP_NAME xtrkcad-${VERSION}.${HASH}.${ARCH}.flatpak
+          ls *flatpak
+          echo "============================================================================="
+
+      - name: Upload to github (always)
+        uses: actions/upload-artifact@v7
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        with:
+          name: flatpak
+          path: build/xtrkcad-*.flatpak
+          retention-days: 5
+          overwrite: true
+          archive: false
+
+      - name: Upload to sourceforge (conditionally)
+        if: ${{ env.SF_UPLOAD_FLAG == 'true' && steps.cache.outputs.cache-hit != 'true' }}
+        env:
+          SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+        run: |
+          scp build/xtrkcad-*.flatpak $SF_USER@frs.sourceforge.net:/home/pfs/project/xtrkcad-fork/$SF_UPLOAD_DIR/
+
+      - name: Save cache key
+        uses: actions/cache/save@v5
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        with:
+          path: ~/.cache/build-tag
+          key: ${{ steps.cache.outputs.cache-primary-key }}
+
+      - name: Email build results
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        uses: dawidd6/action-send-mail@v18
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.GOOGLE_SMTP_USER }}
+          password: ${{ secrets.GOOGLE_SMTP_PASS }}
+          subject: Github workflow built ${{ env.SF_VERSION }} flatpak
+          to: ${{ secrets.GOOGLE_SMTP_USER }}
+          from: ${{ secrets.GOOGLE_SMTP_USER }}
+          body: |
+            Workflow:    ${{ github.workflow }}
+            Run ID:      ${{ github.run_id }}
+            Run attempt: ${{ github.run_attempt }}
+            URL:         ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+            Changeset:   ${{ steps.rev.outputs.changeset }}
+
