@@ -15,6 +15,7 @@ on:
           - GTK3V2MAIN
           - default
           - KensTest
+          - v5.3.1
       sf_user:
         description: 'Sourceforge username (expects SF_SSH_KEY secret to contain private key)'
         default: 'str0belight'
