@@ -109,7 +109,7 @@ jobs:
             gettext \
             mercurial \
             cmake \
-            ninja \
+            ninja-build \
             >/dev/null
           sudo ln -s /usr/bin/rsvg-convert /usr/bin/inkscape
 
