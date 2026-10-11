@@ -108,6 +108,7 @@ jobs:
             librsvg2-bin \
             gettext \
             mercurial \
+            cmake \
             >/dev/null
           sudo ln -s /usr/bin/rsvg-convert /usr/bin/inkscape
 
