@@ -1,4 +1,4 @@
-name: Test build a test flatpak
+name: Build a test flatpak
 run-name: Build ${{ inputs.version }} test flatpak
 
 on:
@@ -15,6 +15,7 @@ on:
           - GTK3V2MAIN
           - default
           - KensTest
+          - v5.3.1
       sf_user:
         description: 'Sourceforge username (expects SF_SSH_KEY secret to contain private key)'
         default: 'str0belight'
@@ -108,6 +109,7 @@ jobs:
             gettext \
             mercurial \
             >/dev/null
+          type rsvg-convert
 
       - name: Start ssh-agent and add key
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
