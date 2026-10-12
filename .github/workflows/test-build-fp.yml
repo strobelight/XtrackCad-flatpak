@@ -49,10 +49,12 @@ jobs:
           SF_USER="${{ inputs.sf_user }}"
           SF_UPLOAD_DIR="${{ inputs.upload_dir }}"
           SF_UPLOAD_FLAG="${{ inputs.upload_flag }}"
+          SMTP_USER="${{ secrets.GOOGLE_SMTP_USER }}"
           echo "SF_VERSION=$SF_VERSION" >> $GITHUB_ENV
           echo "SF_USER=$SF_USER" >> $GITHUB_ENV
           echo "SF_UPLOAD_DIR=$SF_UPLOAD_DIR" >> $GITHUB_ENV
           echo "SF_UPLOAD_FLAG=$SF_UPLOAD_FLAG" >> $GITHUB_ENV
+          echo "SMTP_USER=$SMTP_USER" >> $GITHUB_ENV
           echo "::group::Inputs"
           for b in version=$SF_VERSION sf_user=$SF_USER upload_dir=$SF_UPLOAD_DIR upload_flag=$SF_UPLOAD_FLAG; do
             echo "$b"
@@ -78,7 +80,7 @@ jobs:
         with:
           path: ~/.cache/build-tag
           # if no cache hit, this key created at the end
-          key: build-${{ runner.os }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
+          key: testbuild-${{ runner.os }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
           lookup-only: true
 
       - name: Cache website down
@@ -160,7 +162,7 @@ jobs:
       - name: Configure build
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
-          XTRKCAD_CMAKE_EXTRA_FLAGS="-DXTRKCAD_FLATPAK_NOVERSION=1 -DXTRKCAD_APPEND_SRC_HASH=OFF"
+          XTRKCAD_CMAKE_EXTRA_FLAGS="-DXTRKCAD_FLATPAK_NOVERSION=1 -DXTRKCAD_APPEND_SRC_HASH=OFF -DFLATPAK_STATE_DIR=$(pwd)/.flatpak-workflow"
           cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 $XTRKCAD_CMAKE_EXTRA_FLAGS repo
 
       - name: Build flatpak (no output for a while)
@@ -180,7 +182,7 @@ jobs:
           echo "============================================================================="
 
       - name: Upload to github (always)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v5
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         with:
           name: flatpak
@@ -204,7 +206,7 @@ jobs:
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
       - name: Email build results
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ env.SMTP_USER != 'not-used' && steps.cache.outputs.cache-hit != 'true' }}
         uses: dawidd6/action-send-mail@v18
         with:
           server_address: smtp.gmail.com
