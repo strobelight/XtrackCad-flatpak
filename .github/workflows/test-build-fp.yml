@@ -83,7 +83,7 @@ jobs:
           key: testbuild-${{ runner.os }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
           lookup-only: true
 
-      - name: Cache website down
+      - name: Is sourceforge down
         uses: actions/cache/save@v5
         if: ${{ steps.hg_id.outputs.changeset == 'WebsiteDown' }}
         with:
@@ -136,6 +136,7 @@ jobs:
         run: |
           hg clone ssh://$SF_USER@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
           cd repo
+          echo "DEBUG: $SF_VERSION"
           hg update "$SF_VERSION"
 
       - name: Update description in Help->About
@@ -158,6 +159,25 @@ jobs:
           echo "   after clone: ${{ steps.rev.outputs.changeset }}"
           echo "==================================================="
           false
+
+      - name: Clone the workflow repo
+        uses: actions/checkout@v7
+        with:
+          path: 'wflow-src'
+
+      - name: Apply patches
+        run: |
+          if [[ -d wflow-src/patches/${{ env.SF_VERSION }} ]]; then
+            echo "=================================== DEBUG: ==============================="
+            grep -R FLATPAK_STATE_DIR repo/*
+            for pf in wflow-src/patches/${{ env.SF_VERSION }}/*.patch; do
+              patch -p1 -d repo < $pf
+            done
+            echo "=================================== DEBUG: ==============================="
+            grep -R FLATPAK_STATE_DIR repo/*
+          else
+            echo "No patches/${{ env.SF_VERSION }} found"
+          fi
 
       - name: Configure build
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
