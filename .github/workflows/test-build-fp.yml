@@ -172,8 +172,6 @@ jobs:
             for pf in wflow-src/patches/${{ env.SF_VERSION }}/*.patch; do
               patch -p1 -d repo < $pf
             done
-            cd repo
-            hg diff --git
           else
             echo "No patches/${{ env.SF_VERSION }} found"
           fi
@@ -182,14 +180,16 @@ jobs:
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           XTRKCAD_CMAKE_EXTRA_FLAGS="-DXTRKCAD_FLATPAK_NOVERSION=1 -DXTRKCAD_APPEND_SRC_HASH=OFF -DFLATPAK_STATE_DIR=$(pwd)/.flatpak-workflow"
-          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 $XTRKCAD_CMAKE_EXTRA_FLAGS repo
+          #cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 $XTRKCAD_CMAKE_EXTRA_FLAGS repo
+          cmake -G "Unix Makefiles" -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 $XTRKCAD_CMAKE_EXTRA_FLAGS repo
 
       - name: Build flatpak (no output for a while)
         id: fp_out
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           cd build
-          ninja flatpak
+          #ninja flatpak || exit
+          make flatpak || exit
           echo "============================================================================="
           HASH=${{ steps.rev.outputs.changeset }}
           VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_VERSION " | sed 's/"[ ]*$//;s/^.*"//' | sed "s/.${HASH}//")
