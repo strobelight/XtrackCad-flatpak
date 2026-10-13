@@ -136,8 +136,8 @@ jobs:
         run: |
           hg clone ssh://$SF_USER@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
           cd repo
-          echo "DEBUG: $SF_VERSION"
           hg update "$SF_VERSION"
+          hg log -r .
 
       - name: Update description in Help->About
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
@@ -168,13 +168,12 @@ jobs:
       - name: Apply patches
         run: |
           if [[ -d wflow-src/patches/${{ env.SF_VERSION }} ]]; then
-            echo "=================================== DEBUG: ==============================="
-            grep -R FLATPAK_STATE_DIR repo/*
+            set -x
             for pf in wflow-src/patches/${{ env.SF_VERSION }}/*.patch; do
               patch -p1 -d repo < $pf
             done
-            echo "=================================== DEBUG: ==============================="
-            grep -R FLATPAK_STATE_DIR repo/*
+            cd repo
+            hg diff --git
           else
             echo "No patches/${{ env.SF_VERSION }} found"
           fi
