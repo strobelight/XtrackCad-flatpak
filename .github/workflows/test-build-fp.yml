@@ -137,7 +137,6 @@ jobs:
           hg clone ssh://$SF_USER@hg.code.sf.net/p/xtrkcad-fork/xtrkcad repo
           cd repo
           hg update "$SF_VERSION"
-          hg log -r .
 
       - name: Update description in Help->About
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
@@ -182,16 +181,14 @@ jobs:
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           XTRKCAD_CMAKE_EXTRA_FLAGS="-DXTRKCAD_FLATPAK_NOVERSION=1 -DXTRKCAD_APPEND_SRC_HASH=OFF -DFLATPAK_STATE_DIR=$(pwd)/.flatpak-workflow"
-          #cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 $XTRKCAD_CMAKE_EXTRA_FLAGS repo
-          cmake -G "Unix Makefiles" -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 $XTRKCAD_CMAKE_EXTRA_FLAGS repo
+          cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 $XTRKCAD_CMAKE_EXTRA_FLAGS repo
 
       - name: Build flatpak (no output for a while)
         id: fp_out
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           cd build
-          #ninja flatpak || exit
-          make flatpak || exit
+          ninja flatpak || exit
           echo "============================================================================="
           HASH=${{ steps.rev.outputs.changeset }}
           VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_VERSION " | sed 's/"[ ]*$//;s/^.*"//' | sed "s/.${HASH}//")

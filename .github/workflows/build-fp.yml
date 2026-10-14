@@ -49,10 +49,12 @@ jobs:
           SF_USER="${{ inputs.sf_user }}"
           SF_UPLOAD_DIR="${{ inputs.upload_dir }}"
           SF_UPLOAD_FLAG="${{ inputs.upload_flag }}"
+          SMTP_USER="${{ secrets.GOOGLE_SMTP_USER }}"
           echo "SF_VERSION=$SF_VERSION" >> $GITHUB_ENV
           echo "SF_USER=$SF_USER" >> $GITHUB_ENV
           echo "SF_UPLOAD_DIR=$SF_UPLOAD_DIR" >> $GITHUB_ENV
           echo "SF_UPLOAD_FLAG=$SF_UPLOAD_FLAG" >> $GITHUB_ENV
+          echo "SMTP_USER=$SMTP_USER" >> $GITHUB_ENV
           echo "::group::Inputs"
           for b in version=$SF_VERSION sf_user=$SF_USER upload_dir=$SF_UPLOAD_DIR upload_flag=$SF_UPLOAD_FLAG; do
             echo "$b"
@@ -81,7 +83,7 @@ jobs:
           key: build-${{ runner.os }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
           lookup-only: true
 
-      - name: Cache website down
+      - name: Is sourceforge down
         uses: actions/cache/save@v5
         if: ${{ steps.hg_id.outputs.changeset == 'WebsiteDown' }}
         with:
@@ -108,7 +110,10 @@ jobs:
             librsvg2-bin \
             gettext \
             mercurial \
+            cmake \
+            ninja-build \
             >/dev/null
+          sudo ln -s /usr/bin/rsvg-convert /usr/bin/inkscape
 
       - name: Start ssh-agent and add key
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
@@ -154,10 +159,28 @@ jobs:
           echo "==================================================="
           false
 
+      - name: Clone the workflow repo
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        uses: actions/checkout@v7
+        with:
+          path: 'wflow-src'
+
+      - name: Apply patches
+        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        run: |
+          if [[ -d wflow-src/patches/${{ env.SF_VERSION }} ]]; then
+            set -x
+            for pf in wflow-src/patches/${{ env.SF_VERSION }}/*.patch; do
+              patch -p1 -d repo < $pf
+            done
+          else
+            echo "No patches/${{ env.SF_VERSION }} found"
+          fi
+
       - name: Configure build
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
-          XTRKCAD_CMAKE_EXTRA_FLAGS="-DXTRKCAD_FLATPAK_NOVERSION=1 -DXTRKCAD_APPEND_SRC_HASH=OFF"
+          XTRKCAD_CMAKE_EXTRA_FLAGS="-DXTRKCAD_FLATPAK_NOVERSION=1 -DXTRKCAD_APPEND_SRC_HASH=OFF -DFLATPAK_STATE_DIR=$(pwd)/.flatpak-workflow"
           cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 $XTRKCAD_CMAKE_EXTRA_FLAGS repo
 
       - name: Build flatpak (no output for a while)
@@ -165,7 +188,7 @@ jobs:
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           cd build
-          ninja flatpak
+          ninja flatpak || exit
           echo "============================================================================="
           HASH=${{ steps.rev.outputs.changeset }}
           VERSION=$(cat xtrkcad-config.h | grep "^#define XTRKCAD_VERSION " | sed 's/"[ ]*$//;s/^.*"//' | sed "s/.${HASH}//")
@@ -177,7 +200,7 @@ jobs:
           echo "============================================================================="
 
       - name: Upload to github (always)
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@v5
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         with:
           name: flatpak
@@ -201,7 +224,7 @@ jobs:
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
       - name: Email build results
-        if: ${{ steps.cache.outputs.cache-hit != 'true' }}
+        if: ${{ env.SMTP_USER != 'not-used' && steps.cache.outputs.cache-hit != 'true' }}
         uses: dawidd6/action-send-mail@v18
         with:
           server_address: smtp.gmail.com
