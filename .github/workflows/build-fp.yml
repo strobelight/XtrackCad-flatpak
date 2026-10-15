@@ -241,4 +241,5 @@ jobs:
             Run attempt: ${{ github.run_attempt }}
             URL:         ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
             Changeset:   ${{ steps.rev.outputs.changeset }}
+            Uploaded:    ${{ env.SF_UPLOAD_FLAG }}
 
