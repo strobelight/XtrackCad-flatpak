@@ -1,5 +1,5 @@
 diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/distribution/flatpak/buildFlatpak.sh new-fork-xtrkcad/distribution/flatpak/buildFlatpak.sh
---- xtrkcad-fork-xtrkcad/distribution/flatpak/buildFlatpak.sh	2026-10-13 17:59:34.519474335 -0400
+--- xtrkcad-fork-xtrkcad/distribution/flatpak/buildFlatpak.sh	2026-10-15 13:20:18.446028854 -0400
 +++ new-fork-xtrkcad/distribution/flatpak/buildFlatpak.sh	2026-10-13 14:55:27.144239231 -0400
 @@ -4,7 +4,10 @@
  
@@ -238,7 +238,7 @@ diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/
  build_manifest
  build_flatpak
 diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/distribution/flatpak/CMakeLists.txt new-fork-xtrkcad/distribution/flatpak/CMakeLists.txt
---- xtrkcad-fork-xtrkcad/distribution/flatpak/CMakeLists.txt	2026-10-13 17:59:34.518827270 -0400
+--- xtrkcad-fork-xtrkcad/distribution/flatpak/CMakeLists.txt	2026-10-15 13:20:18.445404139 -0400
 +++ new-fork-xtrkcad/distribution/flatpak/CMakeLists.txt	2026-10-13 17:46:57.356488077 -0400
 @@ -1,24 +1,127 @@
 +# pass -DFLATPAK_STATE_DIR=/path/to/.flatpak-builder-xtrkcad/ (created if not present)
@@ -377,6 +377,14 @@ diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/
 +
 +print_all_variables()
 +endif()
+diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/distribution/flatpak/common_source.sh new-fork-xtrkcad/distribution/flatpak/common_source.sh
+--- xtrkcad-fork-xtrkcad/distribution/flatpak/common_source.sh	1969-12-31 19:00:00.000000000 -0500
++++ new-fork-xtrkcad/distribution/flatpak/common_source.sh	2026-10-15 12:35:56.079906517 -0400
+@@ -0,0 +1,4 @@
++if [ -n "$XDG_CACHE_HOME" ]; then
++    cp -pr /app/share/xtrkcad/* ${XDG_CACHE_HOME}
++fi
++export XTRKCADLIB=${XDG_CACHE_HOME}
 diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/distribution/flatpak/desktop.in new-fork-xtrkcad/distribution/flatpak/desktop.in
 --- xtrkcad-fork-xtrkcad/distribution/flatpak/desktop.in	1969-12-31 19:00:00.000000000 -0500
 +++ new-fork-xtrkcad/distribution/flatpak/desktop.in	2026-10-13 17:19:43.018350591 -0400
@@ -391,11 +399,11 @@ diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/
 +Categories=Graphics
 diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/distribution/flatpak/manifest.yaml.in new-fork-xtrkcad/distribution/flatpak/manifest.yaml.in
 --- xtrkcad-fork-xtrkcad/distribution/flatpak/manifest.yaml.in	1969-12-31 19:00:00.000000000 -0500
-+++ new-fork-xtrkcad/distribution/flatpak/manifest.yaml.in	2026-10-13 17:19:43.018350591 -0400
++++ new-fork-xtrkcad/distribution/flatpak/manifest.yaml.in	2026-10-15 13:15:21.658887300 -0400
 @@ -0,0 +1,74 @@
 +id: @FLATPAK_DOMAIN@.@XTRKCAD_BASE_NAME@
 +runtime: org.freedesktop.Platform
-+runtime-version: '25.08'
++runtime-version: '26.08'
 +sdk: org.freedesktop.Sdk
 +command: run-xtrkcad.sh
 +
@@ -469,22 +477,44 @@ diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/
 +    builddir: true
 diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/distribution/flatpak/metainfo.xml.in new-fork-xtrkcad/distribution/flatpak/metainfo.xml.in
 --- xtrkcad-fork-xtrkcad/distribution/flatpak/metainfo.xml.in	1969-12-31 19:00:00.000000000 -0500
-+++ new-fork-xtrkcad/distribution/flatpak/metainfo.xml.in	2026-10-13 17:19:43.018350591 -0400
-@@ -0,0 +1,32 @@
++++ new-fork-xtrkcad/distribution/flatpak/metainfo.xml.in	2026-10-15 13:36:53.368422266 -0400
+@@ -0,0 +1,54 @@
 +<?xml version="1.0" encoding="UTF-8"?>
 +<component type="desktop-application">
-+  <id>@FLATPAK_DOMAIN@.@XTRKCAD_BASE_NAME@</id>
++  <id>io.sourceforge.xtrkcad_fork.xtrkcad</id>
 +  <name>XTrackCAD@XTRKCAD_SUFFIX_NAME@</name>
 +  <summary>Design model railroad layouts</summary>
 +  <description>
 +    <p>XTrackCAD is a CAD (computer-aided design) program for designing model railroad layouts.</p>
-+    <p><em>Flatpak not officially supported, yet ;-) ; search for "flatpak" from the faq/home wiki</em></p>
 +  </description>
 +  <releases>
-+    <release version="@XTRKCAD_VERSION@" date="1969-12-31"/>
++    <release version="@XTRKCAD_VERSION@" date="2026-10-15">
++        <description>
++            <ul>
++                <li>Fixes</li>
++                <li>For full changelog, visit https://sourceforge.net/projects/xtrkcad-fork/files/XTrackCad/Version%205.3.1/</li>
++            </ul>
++        </description>
++    </release>
++    <release version="5.3.1GA-fp2" date="2026-09-17">
++        <description>
++            <ul>
++                <li>Use Freedesktop version 26.08</li>
++            </ul>
++        </description>
++    </release>
++    <release version="5.3.1GA-fp1" date="2026-01-20">
++        <description>
++            <ul>
++                <li>Use ~/.xtrkcad-fp as working directory</li>
++                <li>For 5.3.1GA changelog, visit https://sourceforge.net/projects/xtrkcad-fork/files/XTrackCad/Version%205.3.1/</li>
++            </ul>
++        </description>
++    </release>
++    <release version="5.3.1GA" date="2025-10-13"/>
 +  </releases>
 +  <content_rating type="oars-1.1" />
-+  <launchable type="desktop-id">@FLATPAK_DOMAIN@.@XTRKCAD_BASE_NAME@.desktop</launchable>
++  <launchable type="desktop-id">io.sourceforge.xtrkcad_fork.xtrkcad.desktop</launchable>
 +  <metadata_license>CC0-1.0</metadata_license>
 +  <project_license>GPL-3.0</project_license>
 +  <url type="bugtracker">https://sourceforge.net/p/xtrkcad-fork/bugs/</url>
@@ -499,10 +529,17 @@ diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/
 +      <caption>Example port_dinllean.xtc</caption>
 +    </screenshot>
 +  </screenshots>
-+  <developer id="@FLATPAK_DOMAIN@.@XTRKCAD_BASE_NAME@">
++  <developer id="io.sourceforge.xtrkcad_fork.xtrkcad">
 +    <name>xtrkcad developers</name>
 +  </developer>
 +</component>
+diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/distribution/flatpak/run-xtrkcad.sh new-fork-xtrkcad/distribution/flatpak/run-xtrkcad.sh
+--- xtrkcad-fork-xtrkcad/distribution/flatpak/run-xtrkcad.sh	1969-12-31 19:00:00.000000000 -0500
++++ new-fork-xtrkcad/distribution/flatpak/run-xtrkcad.sh	2026-10-15 12:38:37.925948976 -0400
+@@ -0,0 +1,3 @@
++#!/usr/bin/env sh
++source $(dirname $0)/common_source.sh
++exec /app/bin/xtrkcad "$@"
 diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/distribution/flatpak/shared-modules/gtk2/arc-gtk2-theme-Replace-Inkscape-dependency-with-rsvg-convert.patch new-fork-xtrkcad/distribution/flatpak/shared-modules/gtk2/arc-gtk2-theme-Replace-Inkscape-dependency-with-rsvg-convert.patch
 --- xtrkcad-fork-xtrkcad/distribution/flatpak/shared-modules/gtk2/arc-gtk2-theme-Replace-Inkscape-dependency-with-rsvg-convert.patch	1969-12-31 19:00:00.000000000 -0500
 +++ new-fork-xtrkcad/distribution/flatpak/shared-modules/gtk2/arc-gtk2-theme-Replace-Inkscape-dependency-with-rsvg-convert.patch	2026-10-13 17:06:42.579545325 -0400
@@ -1995,3 +2032,15 @@ diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/
 +     }
 + 
 +     # \s makes this not work, why?
+diff -uNrb -X /home/kshaffer/.diff_ignore --no-dereference xtrkcad-fork-xtrkcad/distribution/flatpak/xtrkcad.desktop new-fork-xtrkcad/distribution/flatpak/xtrkcad.desktop
+--- xtrkcad-fork-xtrkcad/distribution/flatpak/xtrkcad.desktop	1969-12-31 19:00:00.000000000 -0500
++++ new-fork-xtrkcad/distribution/flatpak/xtrkcad.desktop	2026-10-15 12:42:04.543711481 -0400
+@@ -0,0 +1,8 @@
++[Desktop Entry]
++Name=XTrackCAD
++Comment=Design model railroad layouts
++Exec=run-xtrkcad.sh
++Icon=io.sourceforge.xtrkcad_fork.xtrkcad
++Terminal=false
++Type=Application
++Categories=Graphics
