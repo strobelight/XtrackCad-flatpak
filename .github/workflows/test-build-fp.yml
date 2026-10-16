@@ -1,5 +1,5 @@
 name: Test Build a test flatpak
-run-name: Build ${{ inputs.version }} test flatpak
+run-name: Test Build ${{ inputs.version }} test flatpak
 
 on:
   workflow_dispatch:
@@ -197,6 +197,7 @@ jobs:
           FP_NAME=$(ls -1 xtrkcad*flatpak|head -1)
           mv $FP_NAME xtrkcad-${VERSION}.${HASH}.${ARCH}.flatpak
           ls *flatpak
+          echo "flatpak=$(ls *flatpak)" >> $GITHUB_OUTPUT
           echo "============================================================================="
 
       - name: Upload to github (always)
@@ -241,4 +242,6 @@ jobs:
             Run attempt: ${{ github.run_attempt }}
             URL:         ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
             Changeset:   ${{ steps.rev.outputs.changeset }}
+            Flatpak:     ${{ steps.fp_out.outputs.flatpak }}
+            Uploaded:    ${{ env.SF_UPLOAD_FLAG }}
 
