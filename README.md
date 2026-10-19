@@ -37,9 +37,21 @@ WantedBy=default.target
 ## ~/bin/start_workflows.sh
 
 ```
+#!/usr/bin/env bash
+
+Branches=( \
+    GTK3V2MAIN \
+    default \
+    v5.3.1 \
+)
+
 export GH_TOKEN="github_pat_*REDACTED*"
-/usr/bin/gh workflow run build-fp.yml --repo=strobelight/XtrackCad-flatpak --field version=GTK3V2MAIN --field upload_flag=true >/dev/null 2>&1
-/usr/bin/gh workflow run build-fp.yml --repo=strobelight/XtrackCad-flatpak --field version=default --field upload_flag=true >/dev/null 2>&1
+
+for i in $(seq 0 $(( ${#Branches[@]} - 1)) ); do
+    [[ $i != 0 ]] && sleep 30
+    #echo "$i: ${Branches[$i]}"
+    /usr/bin/gh workflow run build-fp.yml --repo=strobelight/XtrackCad-flatpak --field version="${Branches[$i]}" --field upload_flag=true >/dev/null 2>&1
+done
 ```
 
 ## start via systemd
