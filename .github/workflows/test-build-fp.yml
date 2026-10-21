@@ -40,10 +40,19 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-26.04
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
+        #arch: [ arm64 ]
+        include:
+          - arch: amd64
+            runner: ubuntu-26.04
+          - arch: arm64
+            runner: ubuntu-26.04-arm
+    runs-on: ${{ matrix.runner }}
 
     steps:
-      - name: Inputs
+      - name: Inputs (${{ matrix.arch }})
         run: |
           SF_VERSION="${{ inputs.version }}"
           SF_USER="${{ inputs.sf_user }}"
@@ -61,7 +70,7 @@ jobs:
           done
           echo "::endgroup::"
 
-      - name: Get latest changeset and create cache directory
+      - name: Get latest changeset and create cache directory (${{ matrix.arch }})
         id: hg_id
         env:
           BRANCH_URL: https://sourceforge.net/p/xtrkcad-fork/xtrkcad/ci/${{ env.SF_VERSION }}/tree/
@@ -74,28 +83,28 @@ jobs:
           echo "changeset=$HG_ID" >> $GITHUB_OUTPUT
           echo "changeset on remote: $HG_ID"
 
-      - name: If built already skip next steps
+      - name: If built already skip next steps (${{ matrix.arch }})
         id: cache
         uses: actions/cache/restore@v5
         with:
           path: ~/.cache/build-tag
           # if no cache hit, this key created at the end
-          key: testbuild-${{ runner.os }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
+          key: testbuild-${{ runner.os }}-${{ matrix.arch }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
           lookup-only: true
 
-      - name: Is sourceforge down
+      - name: Is sourceforge down (${{ matrix.arch }})
         uses: actions/cache/save@v5
         if: ${{ steps.hg_id.outputs.changeset == 'WebsiteDown' }}
         with:
           path: ~/.cache/build-tag
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
-      - name: Update
+      - name: Update (${{ matrix.arch }})
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           sudo apt-get update -q
 
-      - name: Install dependencies
+      - name: Install dependencies (${{ matrix.arch }})
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         env:
           DEBIAN_FRONTEND: noninteractive
@@ -115,7 +124,7 @@ jobs:
             >/dev/null
           sudo ln -s /usr/bin/rsvg-convert /usr/bin/inkscape
 
-      - name: Start ssh-agent and add key
+      - name: Start ssh-agent and add key (${{ matrix.arch }})
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -129,7 +138,7 @@ jobs:
           eval "$(ssh-agent -a $SSH_AUTH_SOCK)"
           ssh-add ~/.ssh/sourceforge_key
 
-      - name: Get XtrackCad source and update to desired version
+      - name: Get XtrackCad source and update to desired version (${{ matrix.arch }})
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
@@ -138,7 +147,7 @@ jobs:
           cd repo
           hg update "$SF_VERSION"
 
-      - name: Update description in Help->About
+      - name: Update description in Help->About (${{ matrix.arch }})
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         id: rev
         run: |
@@ -149,7 +158,7 @@ jobs:
           echo "changeset=$CHANGESETREV:$CHANGESET"
           sed -i "s/^#define DESCRIPTION .*/#define DESCRIPTION N_(\"Test XtrackCad build from $SF_VERSION (changeset $CHANGESETREV:$CHANGESET).\")/" app/bin/smalldlg.c
 
-      - name: Are we racing
+      - name: Are we racing (${{ matrix.arch }})
         if: ${{ steps.cache.outputs.cache-hit != 'true'  && steps.hg_id.outputs.changeset != steps.rev.outputs.changeset }}
         run: |
           echo "==================================================="
@@ -159,13 +168,13 @@ jobs:
           echo "==================================================="
           false
 
-      - name: Clone the workflow repo
+      - name: Clone the workflow repo (${{ matrix.arch }})
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         uses: actions/checkout@v7
         with:
           path: 'wflow-src'
 
-      - name: Apply patches
+      - name: Apply patches (${{ matrix.arch }})
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           if [[ -d wflow-src/patches/${{ env.SF_VERSION }} ]]; then
@@ -177,13 +186,13 @@ jobs:
             echo "No patches/${{ env.SF_VERSION }} found"
           fi
 
-      - name: Configure build
+      - name: Configure build (${{ matrix.arch }})
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
           XTRKCAD_CMAKE_EXTRA_FLAGS="-DXTRKCAD_FLATPAK_NOVERSION=1 -DXTRKCAD_APPEND_SRC_HASH=OFF -DFLATPAK_STATE_DIR=$(pwd)/.flatpak-workflow"
           cmake -G Ninja -B build -DCMAKE_BUILD_TYPE=Debug -DXTRKCAD_BUILD_FLATPAK=1 $XTRKCAD_CMAKE_EXTRA_FLAGS repo
 
-      - name: Build flatpak (no output for a while)
+      - name: Build flatpak (no output for a while) (${{ matrix.arch }})
         id: fp_out
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         run: |
@@ -200,31 +209,31 @@ jobs:
           echo "flatpak=$(ls *flatpak)" >> $GITHUB_OUTPUT
           echo "============================================================================="
 
-      - name: Upload to github (always)
+      - name: Upload to github (always) (${{ matrix.arch }})
         uses: actions/upload-artifact@v5
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         with:
-          name: flatpak
-          path: build/xtrkcad-*.flatpak
+          name: ${{ steps.fp_out.outputs.flatpak }}
+          path: build/${{ steps.fp_out.outputs.flatpak }}
           retention-days: 5
           overwrite: true
           archive: false
 
-      - name: Upload to sourceforge (conditionally)
+      - name: Upload to sourceforge (conditionally) (${{ matrix.arch }})
         if: ${{ env.SF_UPLOAD_FLAG == 'true' && steps.cache.outputs.cache-hit != 'true' }}
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          scp build/xtrkcad-*.flatpak $SF_USER@frs.sourceforge.net:/home/pfs/project/xtrkcad-fork/$SF_UPLOAD_DIR/
+          scp build/${{ steps.fp_out.outputs.flatpak }} $SF_USER@frs.sourceforge.net:/home/pfs/project/xtrkcad-fork/$SF_UPLOAD_DIR/
 
-      - name: Save cache key
+      - name: Save cache key (${{ matrix.arch }})
         uses: actions/cache/save@v5
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         with:
           path: ~/.cache/build-tag
           key: ${{ steps.cache.outputs.cache-primary-key }}
 
-      - name: Email build results
+      - name: Email build results (${{ matrix.arch }})
         if: ${{ env.SMTP_USER != 'not-used' && steps.cache.outputs.cache-hit != 'true' }}
         uses: dawidd6/action-send-mail@v18
         with:
