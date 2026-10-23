@@ -42,7 +42,7 @@ jobs:
   build:
     strategy:
       matrix:
-        arch: [ amd64, arm64 ]
+        arch: [ amd64 ]
         include:
           - arch: amd64
             runner: ubuntu-26.04
