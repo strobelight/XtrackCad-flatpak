@@ -1,5 +1,5 @@
-name: Build a test flatpak
-run-name: Build ${{ inputs.version }} test flatpak
+name: Build a test flatpak (x86_64)
+run-name: Build ${{ inputs.version }} test flatpak (x86_64)
 
 on:
   workflow_dispatch:
