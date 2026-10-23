@@ -40,7 +40,15 @@ concurrency:
 
 jobs:
   build:
-    runs-on: ubuntu-26.04
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
+        include:
+          - arch: amd64
+            runner: ubuntu-26.04
+          - arch: arm64
+            runner: ubuntu-26.04-arm
+    runs-on: ${{ matrix.runner }}
 
     steps:
       - name: Inputs
@@ -80,7 +88,7 @@ jobs:
         with:
           path: ~/.cache/build-tag
           # if no cache hit, this key created at the end
-          key: build-${{ runner.os }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
+          key: build-${{ runner.os }}-${{ matrix.arch }}-${{ env.SF_VERSION }}-${{ steps.hg_id.outputs.changeset }}
           lookup-only: true
 
       - name: Is sourceforge down
@@ -204,8 +212,8 @@ jobs:
         uses: actions/upload-artifact@v5
         if: ${{ steps.cache.outputs.cache-hit != 'true' }}
         with:
-          name: flatpak
-          path: build/xtrkcad-*.flatpak
+          name: ${{ steps.fp_out.outputs.flatpak }}
+          path: build/${{ steps.fp_out.outputs.flatpak }}
           retention-days: 5
           overwrite: true
           archive: false
@@ -215,7 +223,7 @@ jobs:
         env:
           SSH_AUTH_SOCK: /tmp/ssh_agent.sock
         run: |
-          scp build/xtrkcad-*.flatpak $SF_USER@frs.sourceforge.net:/home/pfs/project/xtrkcad-fork/$SF_UPLOAD_DIR/
+          scp build/${{ steps.fp_out.outputs.flatpak }} $SF_USER@frs.sourceforge.net:/home/pfs/project/xtrkcad-fork/$SF_UPLOAD_DIR/
 
       - name: Save cache key
         uses: actions/cache/save@v5
